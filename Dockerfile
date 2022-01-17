@@ -1,9 +1,15 @@
-FROM ubuntu
-ENV MY_SERVICE_PORT=80
-ENV MY_SERVICE_PORT1=80
-ENV MY_SERVICE_PORT2=80
-ENV MY_SERVICE_PORT3=80
-LABEL multi.label1="value1" multi.label2="value2" other="value3"
-ADD bin/amd64/http_server_demo /httpserver
-EXPOSE 80
-ENTRYPOINT /httpserver
+FROM golang:1.17 AS builder
+
+ENV GO111MODULE=on \	
+	CGO_ENABLED=0 \	
+	GOOS=linux \	
+	GOARCH=amd64
+
+WORKDIR /build
+COPY . .
+RUN go build -o httpserver .
+
+FROM scratch
+COPY --from=builder /build/httpserver /
+EXPOSE 8080
+ENTRYPOINT ["/httpserver"]
